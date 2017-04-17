@@ -33,7 +33,7 @@ class API
         }
 
         // Setting apiKey, Format & noJsonCallBack
-        $this->args['apiKey'] = $config['apiKey'];
+        $this->args['api_key'] = $config['apiKey'];
         $this->args['format'] = 'json';
         $this->args['noJsonCallback'] = 1;
 
@@ -55,7 +55,11 @@ class API
     public function request($resource, $args = array())
     {
 
-        $url = $this->buildUrl($resource, $args);
+        $url = $this->buildUrl($resource);
+
+        // Pass the POST data into the cURL options
+        $this->options[CURLOPT_POSTFIELDS] = $this->buildPostFields($args);
+
         $curl = curl_init($url);
 
         curl_setopt_array($curl, $this->options);
@@ -82,6 +86,7 @@ class API
             CURLOPT_HEADER => false,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_CUSTOMREQUEST => "POST",
         ];
 
         if (isset($options['timeout'])) {
@@ -98,20 +103,27 @@ class API
      * Builds the url for the curl request.
      *
      * @param string $resource The resource of the api
-     * @param array $args Array of options for the query query
      *
      * @return string  Finalized Url
      */
-    private function buildUrl($resource, $args)
+    private function buildUrl($resource)
     {
-        //Merge args(apiKey, Format, noJsonCallback)
+        return $this->url . $resource;
+    }
+
+    /**
+     * Builds the post data for the curl request.
+     *
+     * @param array $args Array of options for the query query
+     *
+     * @return string  Finalized Request
+     */
+    private function buildPostFields($args)
+    {
         $args = array_merge($args, $this->args);
         $query = http_build_query($args);
 
-        $url = $this->url;
-        $url .= $resource . '?' . $query;
-
-        return $url;
+        return $query;
     }
 
     /**
